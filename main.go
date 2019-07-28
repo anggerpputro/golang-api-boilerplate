@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/julienschmidt/httprouter"
 )
 
-func dog(w http.ResponseWriter, req *http.Request) {
+func dog(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	err := req.ParseForm()
 	if err != nil {
 		panic(err)
@@ -37,7 +39,7 @@ func dog(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "ContentLength: %d \n", responseData.ContentLength)
 }
 
-func cat(w http.ResponseWriter, req *http.Request) {
+func cat(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	err := req.ParseForm()
 	if err != nil {
 		panic(err)
@@ -68,9 +70,15 @@ func cat(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "ContentLength: %d \n", responseData.ContentLength)
 }
 
-func main() {
-	http.HandleFunc("/dog", dog)
-	http.HandleFunc("/cat/", cat)
+func hello(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	fmt.Fprintf(w, "Hello %s!", ps.ByName("name"))
+}
 
-	http.ListenAndServe(":8080", nil)
+func main() {
+	router := httprouter.New()
+	router.GET("/dog", dog)
+	router.GET("/cat", cat)
+	router.GET("/hello/:name", hello)
+
+	http.ListenAndServe(":8080", router)
 }
