@@ -1,67 +1,44 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
-	"net"
-	"strings"
+	"net/http"
+	"net/url"
 )
 
-func main() {
-	li, err := net.Listen("tcp", ":8080")
+type ctallHandler int
+
+func (ch ctallHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	err := req.ParseForm()
 	if err != nil {
 		panic(err)
 	}
-	defer li.Close()
 
-	for {
-		conn, err := li.Accept()
-		if err != nil {
-			log.Fatalln(err.Error())
-		}
-		go handle(conn)
+	responseData := struct {
+		Method        string
+		URL           *url.URL
+		Submissions   map[string][]string
+		Header        http.Header
+		Host          string
+		ContentLength int64
+	}{
+		req.Method,
+		req.URL,
+		req.Form,
+		req.Header,
+		req.Host,
+		req.ContentLength,
 	}
+
+	fmt.Fprintf(w, "Method: %s \n", responseData.Method)
+	fmt.Fprintf(w, "URL: %s \n", responseData.URL)
+	fmt.Fprintf(w, "Submissions: %s \n", responseData.Submissions)
+	fmt.Fprintf(w, "Header: %s \n", responseData.Header)
+	fmt.Fprintf(w, "Host: %s \n", responseData.Host)
+	fmt.Fprintf(w, "ContentLength: %d \n", responseData.ContentLength)
 }
 
-func handle(conn net.Conn) {
-	defer conn.Close()
-
-	// read request
-	request(conn)
-
-	// write response
-	response(conn)
-}
-
-func request(conn net.Conn) {
-	i := 0
-	scanner := bufio.NewScanner(conn)
-
-	for scanner.Scan() {
-		ln := scanner.Text()
-		fmt.Println(ln)
-
-		if i == 0 {
-			// request line
-			m := strings.Fields(ln)[1]
-			fmt.Println("URI: " + m)
-		}
-		if ln == "" {
-			// headers are done
-			break
-		}
-
-		i++
-	}
-}
-
-func response(conn net.Conn) {
-	body := "Hello World"
-
-	fmt.Fprint(conn, "HTTP/1.1 200 OK \n")
-	fmt.Fprintf(conn, "Content-Length: %d\n", len(body))
-	fmt.Fprint(conn, "Content-Type: text/html\n")
-	fmt.Fprint(conn, "\n")
-	fmt.Fprint(conn, body)
+func main() {
+	var ch ctallHandler
+	http.ListenAndServe(":8080", ch)
 }
