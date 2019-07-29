@@ -1,9 +1,19 @@
 package main
 
-import "./routes"
+import (
+	"./routes"
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
-	engine := routes.SetupApiRoutes()
+	router := gin.Default()
 
-	engine.Run(":8080")
+	routes.SetupWebRoutes(router)
+
+	apiRoutes := router.Group("/api")
+	{
+		routes.SetupApiRoutes(apiRoutes)
+	}
+
+	router.Run(":8080")
 }

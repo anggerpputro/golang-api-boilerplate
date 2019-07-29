@@ -1,17 +1,18 @@
 package routes
 
 import (
-	"../app/controllers"
+	"../app/controllers/api"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupApiRoutes() *gin.Engine {
-	r := gin.Default()
+func SetupApiRoutes(router *gin.RouterGroup) *gin.RouterGroup {
+	auth := router.Group("/auth")
+	{
+		authController := apicontrollers.NewAuthController()
 
-	helloController := controllers.NewHelloController()
+		auth.POST("/login", authController.Login)
+		auth.POST("/register", authController.Register)
+	}
 
-	r.GET("/", helloController.Hello)
-	r.GET("/ping", helloController.Ping)
-
-	return r
+	return router
 }
