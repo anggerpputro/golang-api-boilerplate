@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"./routes"
-	"./utils"
+	"github.com/cone-partij/golang-api-boilerplate/routes"
+	"github.com/cone-partij/golang-api-boilerplate/utils"
 	"github.com/gin-gonic/gin"
 )
 
