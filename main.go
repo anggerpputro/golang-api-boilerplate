@@ -2,29 +2,44 @@ package main
 
 import (
 	"fmt"
+	"log"
 
-	"./routes"
-	"./utils"
+	ctlModel "github.com/cone-partij/golang-api-boilerplate/app/models"
+	ctlDB "github.com/cone-partij/golang-api-boilerplate/database"
+	ctlRouter "github.com/cone-partij/golang-api-boilerplate/routes"
+	ctlUtil "github.com/cone-partij/golang-api-boilerplate/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
 
-	routes.SetupWebRoutes(router)
+	ctlRouter.SetupWebRoutes(router)
 
 	apiRoutes := router.Group("/api")
 	{
-		routes.SetupApiRoutes(apiRoutes)
+		ctlRouter.SetupApiRoutes(apiRoutes)
 	}
 
 	fmt.Printf("\nENV:\n")
-	fmt.Printf("- DB_CONNECTION \t: %s \n", utils.Env("DB_CONNECTION"))
-	fmt.Printf("- DB_HOST \t\t: %s \n", utils.Env("DB_HOST"))
-	fmt.Printf("- DB_DATABASE \t\t: %s \n", utils.Env("DB_DATABASE"))
-	fmt.Printf("- DB_USERNAME \t\t: %s \n", utils.Env("DB_USERNAME"))
-	fmt.Printf("- DB_PASSWORD \t\t: %s \n", utils.Env("DB_PASSWORD"))
+	fmt.Printf("- DB_CONNECTION \t: %s \n", ctlUtil.Env("DB_CONNECTION"))
+	fmt.Printf("- DB_HOST \t\t: %s \n", ctlUtil.Env("DB_HOST"))
+	fmt.Printf("- DB_DATABASE \t\t: %s \n", ctlUtil.Env("DB_DATABASE"))
+	fmt.Printf("- DB_USERNAME \t\t: %s \n", ctlUtil.Env("DB_USERNAME"))
+	fmt.Printf("- DB_PASSWORD \t\t: %s \n", ctlUtil.Env("DB_PASSWORD"))
 	fmt.Printf("\n")
+
+	fmt.Printf("\nConnecting to Database...\n")
+	db, err := ctlDB.GetConnection(ctlUtil.Env("DB_CONNECTION"))
+	defer db.Close()
+
+	if err != nil {
+		log.Panicln(err)
+	}
+	fmt.Printf("Connected to Database!\n\n")
+
+	ctlModel.Migrate(db)
 
 	router.Run(":8080")
 }

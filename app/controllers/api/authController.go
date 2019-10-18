@@ -1,7 +1,7 @@
-package apicontrollers
+package api
 
 import (
-	"../../../core"
+	"github.com/cone-partij/golang-api-boilerplate/core"
 	"github.com/gin-gonic/gin"
 )
 
