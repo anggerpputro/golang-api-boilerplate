@@ -1,6 +1,9 @@
 package api
 
 import (
+	"fmt"
+	"log"
+
 	ctlModel "github.com/cone-partij/golang-api-boilerplate/app/models"
 	"github.com/cone-partij/golang-api-boilerplate/core"
 	ctlDB "github.com/cone-partij/golang-api-boilerplate/database"
@@ -17,8 +20,7 @@ func (c UserController) Index(gc *gin.Context) {
 	db := ctlDB.GetDefaultConnection()
 	defer db.Close()
 
-	users := ctlModel.NewUser()
-
+	var users []ctlModel.User
 	// Get all records
 	db.Find(&users)
 
@@ -33,10 +35,19 @@ func (c UserController) Show(gc *gin.Context) {
 	db := ctlDB.GetDefaultConnection()
 	defer db.Close()
 
-	user := ctlModel.NewUser()
-
+	var user ctlModel.User
 	// Get first matched record
-	db.Where("id = ?", id).First(&user)
+	db.First(&user, id)
+
+	if user.ID == 0 {
+		errMessage := fmt.Sprintf("User with ID: %v not found!", id)
+		core.NewJsonResponse().ResponseNotFound(gc, gin.H{
+			"error": map[string]string{
+				"message": errMessage,
+			},
+		})
+		log.Panicln(errMessage)
+	}
 
 	core.NewJsonResponse().ResponseSuccess(gc, gin.H{
 		"user": user,
@@ -44,8 +55,48 @@ func (c UserController) Show(gc *gin.Context) {
 }
 
 func (c UserController) Store(gc *gin.Context) {
+	db := ctlDB.GetDefaultConnection()
+	defer db.Close()
+
+	// Note the use of tx as the database handle once you are within a transaction
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Error; err != nil {
+		core.NewJsonResponse().ResponseError(gc, gin.H{
+			"error": err,
+		})
+		log.Panicln(err)
+	}
+
+	user := ctlModel.NewUser()
+	user.Name = gc.PostForm("name")
+	user.Username = gc.PostForm("username")
+	user.Email = gc.PostForm("email")
+	user.Password = gc.PostForm("password")
+
+	if err := tx.Create(&user).Error; err != nil {
+		tx.Rollback()
+		core.NewJsonResponse().ResponseError(gc, gin.H{
+			"error": err,
+		})
+		log.Panicln(err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		core.NewJsonResponse().ResponseError(gc, gin.H{
+			"error": err,
+		})
+		log.Panicln(err)
+	}
+
 	core.NewJsonResponse().ResponseSuccess(gc, gin.H{
-		"store": true,
+		"store": user,
 	})
 }
 
