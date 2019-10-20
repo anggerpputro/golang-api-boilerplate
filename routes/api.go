@@ -14,5 +14,17 @@ func SetupApiRoutes(router *gin.RouterGroup) *gin.RouterGroup {
 		auth.POST("/register", authController.Register)
 	}
 
+	users := router.Group("/users")
+	{
+		userController := api.NewUserController()
+
+		users.GET("/", userController.Index)
+		users.GET("/:id", userController.Show)
+
+		users.POST("/", userController.Store)
+		users.PUT("/:id", userController.Update)
+		users.DELETE("/:id", userController.Destroy)
+	}
+
 	return router
 }

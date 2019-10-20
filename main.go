@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	ctlModel "github.com/cone-partij/golang-api-boilerplate/app/models"
 	ctlDB "github.com/cone-partij/golang-api-boilerplate/database"
@@ -31,12 +30,10 @@ func main() {
 	fmt.Printf("\n")
 
 	fmt.Printf("\nConnecting to Database...\n")
-	db, err := ctlDB.GetConnection(ctlUtil.Env("DB_CONNECTION"))
+
+	db := ctlDB.GetDefaultConnection()
 	defer db.Close()
 
-	if err != nil {
-		log.Panicln(err)
-	}
 	fmt.Printf("Connected to Database!\n\n")
 
 	ctlModel.Migrate(db)
